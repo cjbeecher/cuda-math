@@ -5,6 +5,19 @@
 #include "matrix.h"
 
 
+cudaError_t _matrix_alloc_device(struct Matrix *matrix) {
+    cudaError_t cuda_status;
+    double *matrix_values;
+    if (matrix->vectors[0].device_values != NULL)
+        return cudaSuccess;
+    cuda_status = cudaMalloc((void **) &matrix_values, matrix->total * sizeof(double));
+    if (cuda_status != cudaSuccess)
+        return cuda_status;
+    matrix->vectors[0].device_values = matrix_values;
+    return cudaSuccess;
+}
+
+
 struct Matrix *matrix_create(int rows, int columns, int init_zero) {
     struct Matrix *result = (struct Matrix *)malloc(sizeof(struct Matrix));
     double *values = (double *)malloc(rows * columns * sizeof(double));
@@ -79,30 +92,22 @@ int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix) {
     if (*transpose != NULL && ((*transpose)->rows != matrix->columns || (*transpose)->columns != matrix->rows))
         return MATRIX_TRANSPOSE_INVALID_DIMENSIONS;
 
-    cuda_status = cudaMalloc((void **) &transpose_values, matrix->total * sizeof(double));
+    cuda_status = _matrix_alloc_device(matrix);
     if (cuda_status != cudaSuccess)
         return (int)cuda_status;
 
-    if (matrix->vectors[0].device_values == NULL) {
-        cuda_status = cudaMalloc((void **) &matrix_values, matrix->total * sizeof(double));
-        if (cuda_status != cudaSuccess) {
-            cudaFree(transpose_values);
-            return (int)cuda_status;
-        }
-        matrix->vectors[0].device_values = matrix_values;
-        cuda_status = (cudaError_t)matrix_copy_to_device(matrix);
-        if (cuda_status != cudaSuccess) {
-            cudaFree(transpose_values);
-            cudaFree(matrix_values);
-            matrix->vectors[0].device_values = NULL;
-            return cuda_status;
-        }
-    }
+    if (*transpose == NULL)
+        *transpose = matrix_create(matrix->columns, matrix->rows, 0);
 
-    *transpose = matrix_create(matrix->columns, matrix->rows, 0);
+    cuda_status = _matrix_alloc_device(*transpose);
+    if (cuda_status != cudaSuccess)
+        return (int)cuda_status;
+
     t = *transpose;
-    t->vectors[0].device_values = transpose_values;
-    _matrix_transpose<<<1, t->total>>>(transpose_values, matrix->vectors[0].device_values, t->columns, matrix->columns);
+    transpose_values = t->vectors[0].device_values;
+    matrix_values = matrix->vectors[0].device_values;
+    matrix_copy_to_device(matrix);
+    _matrix_transpose<<<1, t->total>>>(transpose_values, matrix_values, t->columns, matrix->columns);
     return (int)cudaGetLastError();
 }
 
