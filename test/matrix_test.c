@@ -32,6 +32,9 @@ int main() {
     status = matrix_transpose(&transpose, left);
     if (status != 0)
         printf("Unsuccessful in transposing matrix");
+    status = matrix_transpose(&transpose, left);
+    if (status != 0)
+        printf("Unsuccessful in transposing matrix second time");
 
     matrix_print(left);
     printf("\n");
