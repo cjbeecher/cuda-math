@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(cuda_matrix C CUDA)
+project(cuda_math C CUDA)
 
 find_package(CUDA 10.0 REQUIRED)
 
@@ -10,7 +10,11 @@ if (WIN32)
     set(BUILD_SHARED_LIBS TRUE)
 endif()
 
+add_library(vector SHARED src/lib/vector.cu)
+set_target_properties(vector PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+
 add_library(matrix SHARED src/lib/matrix.cu)
+target_link_libraries(matrix vector)
 set_target_properties(matrix PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 
