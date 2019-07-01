@@ -18,12 +18,13 @@ struct Matrix {
 struct Matrix *matrix_create(int rows, int columns, int init_zero);
 void matrix_destroy(struct Matrix *matrix);
 int matrix_copy_from_device(struct Matrix *matrix);
+int matrix_copy_to_device(struct Matrix *matrix);
 void matrix_destroy_device(struct Matrix *matrix);
 // Transpose will initialize all values for argument transpose
 // struct Matrix *transpose = malloc(sizeof(struct Matrix));
 // status = matrix_transpose(&transpose, matrix);
 int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix);
-int matrix_multiply(struct Matrix *product, struct Matrix *left, struct Matrix *right);
+int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix *right);
 void matrix_print(struct Matrix *matrix);
 
 #ifdef __cplusplus

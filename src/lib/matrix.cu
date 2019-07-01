@@ -17,7 +17,6 @@ cudaError_t _matrix_alloc_device(struct Matrix *matrix) {
     return cudaSuccess;
 }
 
-
 struct Matrix *matrix_create(int rows, int columns, int init_zero) {
     struct Matrix *result = (struct Matrix *)malloc(sizeof(struct Matrix));
     double *values = (double *)malloc(rows * columns * sizeof(double));
@@ -62,6 +61,7 @@ int matrix_copy_from_device(struct Matrix *matrix) {
 
 int matrix_copy_to_device(struct Matrix *matrix) {
     cudaError_t cuda_status;
+    _matrix_alloc_device(matrix);
     cuda_status = cudaMemcpy(
             matrix->vectors[0].device_values,
             matrix->vectors[0].values,
@@ -76,7 +76,7 @@ void matrix_destroy_device(struct Matrix *matrix) {
     matrix->vectors[0].device_values = NULL;
 }
 
-__global__ void _matrix_transpose(double *output, const double *matrix, int o_columns, int m_columns) {
+__global__ void _matrix_transpose(double *output, const double *matrix, const int o_columns, const int m_columns) {
     int index = threadIdx.x;
     int m_col = index % m_columns;
     int m_row = (index - m_col) / m_columns;
@@ -106,36 +106,46 @@ int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix) {
     t = *transpose;
     transpose_values = t->vectors[0].device_values;
     matrix_values = matrix->vectors[0].device_values;
-    matrix_copy_to_device(matrix);
     _matrix_transpose<<<1, t->total>>>(transpose_values, matrix_values, t->columns, matrix->columns);
     return (int)cudaGetLastError();
 }
 
-__global__ void _matrix_multiply(double *output, const double *left, const double *right)
-{
-    int row = threadIdx.x;
-//    int col = 3;
-//    int col = row % cols;
-    output[0] += 7.0; // left[row] * right[col];
+__global__ void _matrix_multiply(
+        double *output,
+        const double *left,
+        const double *right,
+        const int left_columns,
+        const int right_columns
+        ) {
+    int index;
+    double tmp = 0.0;
+    left = left + threadIdx.x * left_columns;
+    right = right + threadIdx.y;
+    for (index = 0; index < left_columns; index++) {
+        tmp += left[0] * right[0];
+        left += 1;
+        right += right_columns;
+    }
+    output[threadIdx.x * right_columns + threadIdx.y] = tmp;
 }
 
-
-int matrix_multiply(struct Matrix *product, struct Matrix *left, struct Matrix *right) {
-//    double *d_o;
-//    double *d_l;
-//    double *d_r;
-//    cudaMalloc((void **)&d_o, product->rows * product->columns * sizeof(double));
-//    cudaMemcpy(d_o, product->values, product->rows * product->columns * sizeof(double), cudaMemcpyHostToDevice);
-//    cudaMalloc((void **)&d_l, left->rows * left->columns * sizeof(double));
-//    cudaMemcpy(d_l, left->values, left->rows * left->columns * sizeof(double), cudaMemcpyHostToDevice);
-//    cudaMalloc((void **)&d_r, right->rows * right->columns * sizeof(double));
-//    cudaMemcpy(d_r, left->values, right->rows * right->columns * sizeof(double), cudaMemcpyHostToDevice);
-//    _matrix_multiply<<<1, left->rows * left->columns>>>(d_o, d_l, d_r);
-//    cudaMemcpy(product->values, d_o, product->rows * product->columns * sizeof(double), cudaMemcpyDeviceToHost);
-//    cudaFree(d_o);
-//    cudaFree(d_l);
-//    cudaFree(d_r);
-    return 0;
+int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix *right) {
+    cudaError_t cuda_status;
+    *product = matrix_create(left->rows, right->columns, 1);
+    cuda_status = _matrix_alloc_device(*product);
+    if (cuda_status != cudaSuccess) {
+        matrix_destroy(*product);
+        *product = NULL;
+        return (int)cuda_status;
+    }
+    _matrix_multiply<<<1, dim3((*product)->rows, (*product)->columns)>>>(
+            (*product)->vectors[0].device_values,
+            left->vectors[0].device_values,
+            right->vectors[0].device_values,
+            left->columns,
+            right->columns
+            );
+    return (int)cudaGetLastError();
 }
 
 
