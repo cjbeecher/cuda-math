@@ -1,0 +1,1 @@
+Set architecture to amd64 for visual studio compiler to make cuda compile correctly
