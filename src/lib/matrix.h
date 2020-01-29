@@ -1,8 +1,9 @@
-#include "vector.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdbool.h>
+#include "vector.h"
 
 #define MATRIX_TRANSPOSE_INVALID_DIMENSIONS -1
 
@@ -17,7 +18,7 @@ struct Matrix {
 
 struct Matrix *matrix_create(int rows, int columns, int init_zero);
 void matrix_destroy(struct Matrix *matrix);
-int matrix_copy_from_device(struct Matrix *matrix);
+int matrix_copy_from_device(struct Matrix *matrix, bool destroy);
 int matrix_copy_to_device(struct Matrix *matrix);
 void matrix_destroy_device(struct Matrix *matrix);
 // Transpose will initialize all values for argument transpose

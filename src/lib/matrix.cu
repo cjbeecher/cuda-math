@@ -48,7 +48,7 @@ void matrix_destroy(struct Matrix *matrix) {
     free(matrix);
 }
 
-int matrix_copy_from_device(struct Matrix *matrix) {
+int matrix_copy_from_device(struct Matrix *matrix, bool destroy) {
     cudaError_t cuda_status;
     cuda_status = cudaMemcpy(
             matrix->vectors[0].values,
@@ -56,12 +56,17 @@ int matrix_copy_from_device(struct Matrix *matrix) {
             matrix->total * sizeof(double),
             cudaMemcpyDeviceToHost
             );
+    if ((int)cuda_status == 0 && destroy) {
+        cudaFree(matrix->vectors[0].device_values);
+        matrix->vectors[0].device_values = NULL;
+    }
     return (int)cuda_status;
 }
 
 int matrix_copy_to_device(struct Matrix *matrix) {
     cudaError_t cuda_status;
-    _matrix_alloc_device(matrix);
+    if (matrix->vectors[0].device_values == NULL)
+        _matrix_alloc_device(matrix);
     cuda_status = cudaMemcpy(
             matrix->vectors[0].device_values,
             matrix->vectors[0].values,

@@ -38,7 +38,7 @@ int main() {
     status = matrix_multiply(&output, left, right);
     if (status != 0)
         printf("Error on matrix multiplication\n");
-    status = matrix_copy_from_device(output);
+    status = matrix_copy_from_device(output, false);
     if (status != 0)
         printf("Error copying Product from device\n");
 
@@ -52,14 +52,14 @@ int main() {
     printf("\nLeft Matrix:\n");
     matrix_print(left);
     if (status == 0) {
-        status = matrix_copy_from_device(transpose);
+        status = matrix_copy_from_device(transpose, false);
         if (status != 0) {
             printf("Error copying transpose from device: %i\n", status);
             printf("Device memory address: %p\n", transpose->vectors[0].device_values);
         }
         else {
-//            printf("\nTransposed Matrix:\n");
-//            matrix_print(transpose);
+            printf("\nTransposed Matrix:\n");
+            matrix_print(transpose);
             matrix_destroy(transpose);
         }
     }
