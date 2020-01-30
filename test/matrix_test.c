@@ -15,6 +15,7 @@
 int main() {
     int index;
     int status;
+    struct Matrix *copy = NULL;
     printf("Creating Left Matrix\n");
     struct Matrix *left = matrix_create(LEFT_ROWS, LEFT_COLUMNS, 0);
     printf("Creating Right Matrix\n");
@@ -63,6 +64,12 @@ int main() {
             matrix_destroy(transpose);
         }
     }
+
+    matrix_copy(&copy, output);
+    printf("\nMatrix copy output\n");
+    matrix_print(copy);
+    matrix_destroy(copy);
+
     printf("\nRight Matrix:\n");
     matrix_print(right);
     printf("\n");

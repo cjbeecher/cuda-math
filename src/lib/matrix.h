@@ -28,6 +28,7 @@ int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix);
 int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix *right);
 // Current implementation permits only square matrices
 int matrix_lu_decomposition(struct Matrix **l, struct Matrix *matrix);
+int matrix_copy(struct Matrix **output, struct Matrix *matrix);
 void matrix_print(struct Matrix *matrix);
 
 #ifdef __cplusplus

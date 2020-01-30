@@ -1,8 +1,8 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include "matrix.h"
+#include "cuda_runtime.h"
+#include "device_launch_parameters.h"
 
 
 cudaError_t _matrix_alloc_device(struct Matrix *matrix) {
@@ -56,7 +56,7 @@ int matrix_copy_from_device(struct Matrix *matrix, bool destroy) {
             matrix->total * sizeof(double),
             cudaMemcpyDeviceToHost
             );
-    if ((int)cuda_status == 0 && destroy) {
+    if ((int)cuda_status == cudaSuccess && destroy) {
         cudaFree(matrix->vectors[0].device_values);
         matrix->vectors[0].device_values = NULL;
     }
@@ -172,6 +172,26 @@ int matrix_lu_decomposition(struct Matrix **output, struct Matrix *matrix) {
         return MATRIX_INVALID_DIMENSIONS;
 
     ;
+
+    return (int)cudaGetLastError();
+}
+
+int matrix_copy(struct Matrix **output, struct Matrix *matrix) {
+    cudaError_t cuda_status;
+    *output = matrix_create(matrix->rows, matrix->columns, 0);
+
+    cuda_status = _matrix_alloc_device(*output);
+    if (cuda_status != cudaSuccess) return (int)cuda_status;
+
+    cuda_status = cudaMemcpy(
+            (*output)->vectors[0].device_values,
+            matrix->vectors[0].device_values,
+            (*output)->total * sizeof(double),
+            cudaMemcpyDeviceToDevice
+    );
+    if (cuda_status != cudaSuccess) return (int)cuda_status;
+
+    memcpy((*output)->vectors[0].values, matrix->vectors[0].values, (*output)->total * sizeof(double));
 
     return (int)cudaGetLastError();
 }
