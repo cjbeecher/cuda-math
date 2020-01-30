@@ -95,7 +95,7 @@ int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix) {
     cudaError_t cuda_status;
 
     if (*transpose != NULL && ((*transpose)->rows != matrix->columns || (*transpose)->columns != matrix->rows))
-        return MATRIX_TRANSPOSE_INVALID_DIMENSIONS;
+        return MATRIX_INVALID_DIMENSIONS;
 
     cuda_status = _matrix_alloc_device(matrix);
     if (cuda_status != cudaSuccess)
@@ -136,7 +136,10 @@ __global__ void _matrix_multiply(
 
 int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix *right) {
     cudaError_t cuda_status;
-    *product = matrix_create(left->rows, right->columns, 1);
+    if (*product == NULL)
+        *product = matrix_create(left->rows, right->columns, 1);
+    else if ((*product)->rows != left->rows || (*product)->columns != right->columns)
+        return MATRIX_INVALID_DIMENSIONS;
     cuda_status = _matrix_alloc_device(*product);
     if (cuda_status != cudaSuccess) {
         matrix_destroy(*product);
@@ -153,6 +156,25 @@ int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix 
     return (int)cudaGetLastError();
 }
 
+__global__ void _matrix_lu_decomposition(
+        double *output,
+        const double *left,
+        const double *right,
+        const int left_columns,
+        const int right_columns
+) {
+}
+
+int matrix_lu_decomposition(struct Matrix **output, struct Matrix *matrix) {
+    if (*output == NULL)
+        *output = matrix_create(matrix->rows, matrix->columns, 1);
+    else if ((*output)->rows != matrix->rows || (*output)->columns != matrix->columns)
+        return MATRIX_INVALID_DIMENSIONS;
+
+    ;
+
+    return (int)cudaGetLastError();
+}
 
 void matrix_print(struct Matrix *matrix) {
     int row;

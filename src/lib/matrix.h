@@ -5,7 +5,7 @@ extern "C" {
 #include <stdbool.h>
 #include "vector.h"
 
-#define MATRIX_TRANSPOSE_INVALID_DIMENSIONS -1
+#define MATRIX_INVALID_DIMENSIONS -1
 
 // elements in the member vectors represents a row in a matrix
 struct Matrix {
@@ -26,6 +26,8 @@ void matrix_destroy_device(struct Matrix *matrix);
 // status = matrix_transpose(&transpose, matrix);
 int matrix_transpose(struct Matrix **transpose, struct Matrix *matrix);
 int matrix_multiply(struct Matrix **product, struct Matrix *left, struct Matrix *right);
+// Current implementation permits only square matrices
+int matrix_lu_decomposition(struct Matrix **l, struct Matrix *matrix);
 void matrix_print(struct Matrix *matrix);
 
 #ifdef __cplusplus
