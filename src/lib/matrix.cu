@@ -166,12 +166,23 @@ __global__ void _matrix_lu_decomposition(
 }
 
 int matrix_lu_decomposition(struct Matrix **output, struct Matrix *matrix) {
+    int i, j, k;
     if (*output == NULL)
         *output = matrix_create(matrix->rows, matrix->columns, 1);
     else if ((*output)->rows != matrix->rows || (*output)->columns != matrix->columns)
         return MATRIX_INVALID_DIMENSIONS;
 
-    ;
+    for (i = 0; i < matrix->rows; i++) {
+        for (j = i; j < matrix->columns; j++) {
+            for (k = 0; k < i - 1; k++)
+                (*output)->vectors[i].values[j] = (*output)->vectors[i].values[j] - ((*output)->vectors[i].values[k] * (*output)->vectors[k].values[j]);
+        }
+        for (j = i + 1; j < matrix->columns; j++) {
+            for (k = 1; k < i - 1; k++)
+                (*output)->vectors[j].values[i] = (*output)->vectors[j].values[i] - (*output)->vectors[j].values[k] * (*output)->vectors[k].values[i];
+            (*output)->vectors[j].values[i] = (*output)->vectors[j].values[i] / (*output)->vectors[i].values[i];
+        }
+    }
 
     return (int)cudaGetLastError();
 }

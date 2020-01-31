@@ -15,7 +15,8 @@
 int main() {
     int index;
     int status;
-    struct Matrix *copy = NULL;
+    struct Matrix *alu = NULL;
+    struct Matrix *lu = NULL;
     printf("Creating Left Matrix\n");
     struct Matrix *left = matrix_create(LEFT_ROWS, LEFT_COLUMNS, 0);
     printf("Creating Right Matrix\n");
@@ -65,17 +66,30 @@ int main() {
         }
     }
 
-    matrix_copy(&copy, output);
-    printf("\nMatrix copy output\n");
-    matrix_print(copy);
-    matrix_destroy(copy);
+    lu = matrix_create(3, 3, false);
+    lu->vectors[0].values[0] = 2.0;
+    lu->vectors[0].values[1] = -1.0;
+    lu->vectors[0].values[2] = -2.0;
+    lu->vectors[0].values[3] = -4.0;
+    lu->vectors[0].values[4] = 6.0;
+    lu->vectors[0].values[5] = 3.0;
+    lu->vectors[0].values[6] = -4.0;
+    lu->vectors[0].values[7] = -2.0;
+    lu->vectors[0].values[8] = 8.0;
+    printf("\nLU matrix\n");
+    matrix_print(lu);
+    matrix_copy(&alu, lu);
+    matrix_lu_decomposition(&alu, lu);
+    printf("\nMatrix A LU decomposition output\n");
+    matrix_print(alu);
+    matrix_destroy(alu);
 
-    printf("\nRight Matrix:\n");
-    matrix_print(right);
-    printf("\n");
-    printf("Product Matrix:\n");
-    matrix_print(output);
-    printf("\n");
+//    printf("\nRight Matrix:\n");
+//    matrix_print(right);
+//    printf("\n");
+//    printf("Product Matrix:\n");
+//    matrix_print(output);
+//    printf("\n");
     matrix_destroy(left);
     matrix_destroy(right);
     matrix_destroy(output);
