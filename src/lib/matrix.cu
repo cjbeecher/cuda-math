@@ -174,11 +174,11 @@ int matrix_lu_decomposition(struct Matrix **output, struct Matrix *matrix) {
 
     for (i = 0; i < matrix->rows; i++) {
         for (j = i; j < matrix->columns; j++) {
-            for (k = 0; k < i - 1; k++)
+            for (k = 0; k < i; k++)
                 (*output)->vectors[i].values[j] = (*output)->vectors[i].values[j] - ((*output)->vectors[i].values[k] * (*output)->vectors[k].values[j]);
         }
         for (j = i + 1; j < matrix->columns; j++) {
-            for (k = 1; k < i - 1; k++)
+            for (k = 0; k < i; k++)
                 (*output)->vectors[j].values[i] = (*output)->vectors[j].values[i] - (*output)->vectors[j].values[k] * (*output)->vectors[k].values[i];
             (*output)->vectors[j].values[i] = (*output)->vectors[j].values[i] / (*output)->vectors[i].values[i];
         }
@@ -194,13 +194,15 @@ int matrix_copy(struct Matrix **output, struct Matrix *matrix) {
     cuda_status = _matrix_alloc_device(*output);
     if (cuda_status != cudaSuccess) return (int)cuda_status;
 
-    cuda_status = cudaMemcpy(
-            (*output)->vectors[0].device_values,
-            matrix->vectors[0].device_values,
-            (*output)->total * sizeof(double),
-            cudaMemcpyDeviceToDevice
-    );
-    if (cuda_status != cudaSuccess) return (int)cuda_status;
+    if (matrix->vectors[0].device_values != NULL) {
+        cuda_status = cudaMemcpy(
+                (*output)->vectors[0].device_values,
+                matrix->vectors[0].device_values,
+                (*output)->total * sizeof(double),
+                cudaMemcpyDeviceToDevice
+        );
+        if (cuda_status != cudaSuccess) return (int) cuda_status;
+    }
 
     memcpy((*output)->vectors[0].values, matrix->vectors[0].values, (*output)->total * sizeof(double));
 
